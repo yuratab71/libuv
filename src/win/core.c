@@ -696,7 +696,7 @@ static void uv__process_endgames(uv_loop_t* loop) {
 }
 
 
-int uv_run(uv_loop_t *loop, uv_run_mode mode) {
+int uv_run(uv_loop_t *loop, uv_run_mode mode, user_callback callback, void *user_data) {
   DWORD timeout;
   int r;
   int can_sleep;
@@ -712,14 +712,18 @@ int uv_run(uv_loop_t *loop, uv_run_mode mode) {
   if (mode == UV_RUN_DEFAULT && r != 0 && loop->stop_flag == 0) {
     uv_update_time(loop);
     uv__run_timers(loop);
+    callback(user_data);
   }
 
   while (r != 0 && loop->stop_flag == 0) {
     can_sleep = loop->pending_reqs_tail == NULL && loop->idle_handles == NULL;
 
     uv__process_reqs(loop);
+    callback(user_data);
     uv__idle_invoke(loop);
+    callback(user_data);
     uv__prepare_invoke(loop);
+    callback(user_data);
 
     timeout = 0;
     if ((mode == UV_RUN_ONCE && can_sleep) || mode == UV_RUN_DEFAULT)
@@ -728,6 +732,7 @@ int uv_run(uv_loop_t *loop, uv_run_mode mode) {
     uv__metrics_inc_loop_count(loop);
 
     uv__poll(loop, timeout);
+    callback(user_data);
 
     /* Process immediate callbacks (e.g. write_cb) a small fixed number of
      * times to avoid loop starvation.*/
@@ -742,10 +747,13 @@ int uv_run(uv_loop_t *loop, uv_run_mode mode) {
     uv__metrics_update_idle_time(loop);
 
     uv__check_invoke(loop);
+    callback(user_data);
     uv__process_endgames(loop);
+    callback(user_data);
 
     uv_update_time(loop);
     uv__run_timers(loop);
+    callback(user_data);
 
     r = uv__loop_alive(loop);
     if (mode == UV_RUN_ONCE || mode == UV_RUN_NOWAIT)

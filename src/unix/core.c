@@ -424,7 +424,7 @@ int uv_loop_alive(const uv_loop_t* loop) {
 }
 
 
-int uv_run(uv_loop_t* loop, uv_run_mode mode) {
+int uv_run(uv_loop_t* loop, uv_run_mode mode, user_callback callback, void *user_data) {
   int timeout;
   int r;
   int can_sleep;
@@ -440,6 +440,7 @@ int uv_run(uv_loop_t* loop, uv_run_mode mode) {
   if (mode == UV_RUN_DEFAULT && r != 0 && loop->stop_flag == 0) {
     uv__update_time(loop);
     uv__run_timers(loop);
+    callback(user_data);
   }
 
   while (r != 0 && loop->stop_flag == 0) {
@@ -448,8 +449,11 @@ int uv_run(uv_loop_t* loop, uv_run_mode mode) {
         uv__queue_empty(&loop->idle_handles);
 
     uv__run_pending(loop);
+    callback(user_data);
     uv__run_idle(loop);
+    callback(user_data);
     uv__run_prepare(loop);
+    callback(user_data);
 
     timeout = 0;
     if ((mode == UV_RUN_ONCE && can_sleep) || mode == UV_RUN_DEFAULT)
@@ -458,6 +462,7 @@ int uv_run(uv_loop_t* loop, uv_run_mode mode) {
     uv__metrics_inc_loop_count(loop);
 
     uv__io_poll(loop, timeout);
+    callback(user_data);
 
     /* Process immediate callbacks (e.g. write_cb) a small fixed number of
      * times to avoid loop starvation.*/
@@ -472,10 +477,13 @@ int uv_run(uv_loop_t* loop, uv_run_mode mode) {
     uv__metrics_update_idle_time(loop);
 
     uv__run_check(loop);
+    callback(user_data);
     uv__run_closing_handles(loop);
+    callback(user_data);
 
     uv__update_time(loop);
     uv__run_timers(loop);
+    callback(user_data);
 
     r = uv__loop_alive(loop);
     if (mode == UV_RUN_ONCE || mode == UV_RUN_NOWAIT)

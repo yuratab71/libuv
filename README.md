@@ -1,5 +1,9 @@
 ![libuv][libuv_banner]
 
+## IMPORTANT
+
+This is the modified version of libuv library for my personal needs
+
 ## Overview
 
 libuv is a multi-platform support library with a focus on asynchronous I/O. It

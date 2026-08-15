@@ -307,7 +307,9 @@ UV_EXTERN int uv_loop_alive(const uv_loop_t* loop);
 UV_EXTERN int uv_loop_configure(uv_loop_t* loop, uv_loop_option option, ...);
 UV_EXTERN int uv_loop_fork(uv_loop_t* loop);
 
-UV_EXTERN int uv_run(uv_loop_t*, uv_run_mode mode);
+UV_EXTERN typedef void (*user_callback)(void *ctx, void *pending_jobs)
+
+UV_EXTERN int uv_run(uv_loop_t*, uv_run_mode mode,  user_callback callback, void *user_data);
 UV_EXTERN void uv_stop(uv_loop_t*);
 
 UV_EXTERN void uv_ref(uv_handle_t*);
